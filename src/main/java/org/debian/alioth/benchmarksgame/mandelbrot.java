@@ -12,19 +12,30 @@ package org.debian.alioth.benchmarksgame;
 
 
 import mhammons.cnrs.Benchable;
-import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.*;
 
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.*;
 
-
+@State(Scope.Thread)
 public class mandelbrot {
    byte[][] out;
    AtomicInteger yCt;
    double[] Crb;
    double[] Cib;
 
+
    OutputStream output = System.out;
+
+   @Setup(Level.Invocation)
+   public void setUp() {
+      try {
+         output = new FileOutputStream(new File("/dev/null"));
+      } catch (Exception e) {
+
+      }
+   }
 
    int getByte(int x, int y){
       int res=0;
@@ -58,9 +69,10 @@ public class mandelbrot {
          line[xb]=(byte)getByte(xb*8,y);
    }
 
-   public void main(String[] args) throws Exception {
-      int N=6000;
-      if (args.length>=1) N=Integer.parseInt(args[0]);
+   @Benchmark
+   @BenchmarkMode({Mode.SampleTime}) @OutputTimeUnit(TimeUnit.MILLISECONDS)
+   public void main() throws Exception {
+      int N=16000;
 
       Crb=new double[N+7]; Cib=new double[N+7];
       double invN=2.0/N; for(int i=0;i<N;i++){ Cib[i]=i*invN-1.0; Crb[i]=i*invN-1.5; }

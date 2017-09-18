@@ -51,7 +51,7 @@ public class binarytrees {
 
 
     @Benchmark
-    @BenchmarkMode({Mode.SingleShotTime, Mode.SampleTime, Mode.AverageTime}) @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    @BenchmarkMode({Mode.SampleTime}) @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void main(final binarytreesState state) throws Exception {
         int n = 21;
 
