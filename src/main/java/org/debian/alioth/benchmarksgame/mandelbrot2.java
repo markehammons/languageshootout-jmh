@@ -20,7 +20,7 @@ public class mandelbrot2 {
     private final int CORES = Runtime.getRuntime().availableProcessors();
 
     @Benchmark
-    @Warmup(iterations = 5, time = 2, timeUnit = TimeUnit.MINUTES)
+    @Warmup(iterations = 5)
     @BenchmarkMode({Mode.SampleTime}) @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public void mandelbrotBench2() throws Exception {
         new Mandelbrot(16000).compute();
