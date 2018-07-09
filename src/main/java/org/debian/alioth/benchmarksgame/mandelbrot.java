@@ -31,7 +31,7 @@ public class mandelbrot {
    @Setup(Level.Invocation)
    public void setUp() {
       try {
-         output = new FileOutputStream(new File("/dev/null"));
+         output = null;
       } catch (Exception e) {
 
       }
@@ -70,8 +70,8 @@ public class mandelbrot {
    }
 
    @Benchmark
-   @BenchmarkMode({Mode.SampleTime}) @OutputTimeUnit(TimeUnit.MILLISECONDS)
-   public void main() throws Exception {
+   @BenchmarkMode({Mode.AverageTime}) @OutputTimeUnit(TimeUnit.MILLISECONDS)
+   public void mainMT() throws Exception {
       int N=16000;
 
       Crb=new double[N+7]; Cib=new double[N+7];
@@ -89,9 +89,36 @@ public class mandelbrot {
       for (Thread t:pool) t.start();
       for (Thread t:pool) t.join();
 
-      OutputStream stream = new BufferedOutputStream(output);
+      OutputStream stream = new BufferedOutputStream(new FileOutputStream(new File("/dev/null")));
       stream.write(("P4\n"+N+" "+N+"\n").getBytes());
       for(int i=0;i<N;i++) stream.write(out[i]);
       stream.close();
    }
+
+   @Benchmark
+   @BenchmarkMode({Mode.AverageTime}) @OutputTimeUnit(TimeUnit.MILLISECONDS)
+   public void mainST() throws Exception {
+      int N=16000;
+
+      Crb=new double[N+7]; Cib=new double[N+7];
+      double invN=2.0/N; for(int i=0;i<N;i++){ Cib[i]=i*invN-1.0; Crb[i]=i*invN-1.5; }
+      yCt=new AtomicInteger();
+      out=new byte[N][(N+7)/8];
+
+      Thread[] pool=new Thread[1];
+      for (int i=0;i<pool.length;i++)
+         pool[i]=new Thread(){
+            public void run() {
+               int y; while((y=yCt.getAndIncrement())<out.length) putLine(y,out[y]);
+            }
+         };
+      for (Thread t:pool) t.start();
+      for (Thread t:pool) t.join();
+
+      OutputStream stream = new BufferedOutputStream(new FileOutputStream(new File("/dev/null")));
+      stream.write(("P4\n"+N+" "+N+"\n").getBytes());
+      for(int i=0;i<N;i++) stream.write(out[i]);
+      stream.close();
+   }
+
 }
