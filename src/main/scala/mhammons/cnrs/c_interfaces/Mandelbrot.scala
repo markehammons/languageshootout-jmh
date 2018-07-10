@@ -20,7 +20,7 @@ trait CalcPixelsFun {
 
 @FunctionalInterface
 trait CalcPixels8Fun {
-  def execute(x: Int, r: Value, i0: Double): Byte
+  def execute(x: Int, r: Value): Byte
 }
 
 @FunctionalInterface
@@ -39,9 +39,12 @@ trait Mandelbrot {
   def initValues(arr: Array[Double], wid_ht: Long): Unit
   def freem128d(value: Value): Unit
   def genInitI(d: Double): Value
-  def loadInit(d: Double, i: Int): Unit
+  def loadInit(d: Double): Unit
   def calcPixels(b: Array[Byte], rowstart: Int, x: Int, r0: Value, initI: Double): Unit
-  def calcPixels8(x: Int, r0: Value, i0: Double): Byte
+  def calcPixels8(x: Int, r0: Value): Byte
+
+  def initValuesN(wid_ht: Long): Value
+  def releaseValuesN(values: Value): Unit
 }
 
 object Mandelbrot {
@@ -64,16 +67,21 @@ object Mandelbrot {
 
 }
 
-class SMandelbrot extends Sulong(src) with Mandelbrot  {
+class SMandelbrot extends Sulong(new File("target/Mandelbrot.bc")) with Mandelbrot  {
 
   val mandelbrotF = lib.getMember("mandelbrot")
   private val SSEInitF = lib.getMember("SSEinit").as(classOf[SSEInitFun])
   private val initValuesF = lib.getMember("initValues").as(classOf[InitValuesFun])
   private val freem128 = lib.getMember("freem128d")
   private val geninit_i = lib.getMember("genInitI")
-  private val loadInitF = lib.getMember("loadInit").as(classOf[LoadInitFun])
+  private val loadInitF = lib.getMember("loadInit")
   private val calc = lib.getMember("calcPixels").as(classOf[CalcPixelsFun])
   private val calcPixels8F = lib.getMember("calcPixels8").as(classOf[CalcPixels8Fun])
+  private val initValuesNF = lib.getMember("initValuesN")
+  private val releaseValuesF = lib.getMember("releaseValuesN")
+
+  val stepThroughValues = lib.getMember("stepThroughValues")
+  val incrementValues = lib.getMember("incrementValues")
 
   override def initSSE(wid_ht: Long): Value = {
     SSEInitF.execute(wid_ht)
@@ -120,11 +128,19 @@ class SMandelbrot extends Sulong(src) with Mandelbrot  {
 
   override def mandelbrot(wid_ht: Long): Int = mandelbrotF.execute(wid_ht.asInstanceOf[Object]).asInt()
 
-  override def calcPixels8(x: Int, r0: Value, i0: Double): Byte = {
-    calcPixels8F.execute(x, r0, i0)
+  override def calcPixels8(x: Int, r0: Value): Byte = {
+    calcPixels8F.execute(x, r0)
   }
 
-  override def loadInit(d: Double, i: Int): Unit = {
-    loadInitF.execute(d, i)
+  override def loadInit(d: Double): Unit = {
+    loadInitF.executeVoid(context.asValue(d))
+  }
+
+  override def initValuesN(wid_ht: Long): Value = {
+    initValuesNF.execute(context.asValue(wid_ht))
+  }
+
+  override def releaseValuesN(values: Value): Unit = {
+    releaseValuesF.executeVoid(values)
   }
 }

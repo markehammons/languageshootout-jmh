@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <emmintrin.h>
-
+#include <polyglot.h>
 
 long numDigits(long n)
 {
@@ -132,6 +132,43 @@ void initValues(double* i0, long wid_ht) {
     }
 }
 
+double blkhole;
+double blackhole(double i) {
+    blkhole = i;
+    return blkhole;
+}
+
+
+void stepThroughValues(double* i0, long wid_ht) {
+    for(long xy = 0; xy < wid_ht; xy++) {
+        blkhole = i0[xy];
+    }
+}
+
+
+//POLYGLOT_DECLARE_TYPE(double)
+
+void initValuesN(long wid_ht) {
+    double* i0 = malloc(sizeof(double) * wid_ht);
+
+    for(long xy=0; xy<wid_ht; xy+=2) {
+        i0[xy]    = 2.0 / wid_ht *  xy    - 1.0;
+        i0[xy+1]  = 2.0 / wid_ht * (xy+1) - 1.0;
+    }
+
+    free(i0);
+}
+
+void incrementValues(double* i0, long wid_ht) {
+    for(long xy=0; xy < wid_ht; xy++) {
+        i0[xy] += 1;
+    }
+}
+
+void releaseValuesN(double* i0) {
+    free(i0);
+}
+
 void calcPixels(int x, __m128d* r0, double init_i, long* resArr) {
     double arr[] = {init_i,init_i};
     __m128d init = _mm_load_pd(arr);
@@ -143,15 +180,17 @@ void calcPixels(int x, __m128d* r0, double init_i, long* resArr) {
     return;
 }
 
-void loadInit(double d, int i) {
+double init_i[2];
+__m128d i0;
+
+void loadInit(double d) {
+    init_i[0] = d;
+    init_i[1] = d;
+    i0 = _mm_load_pd(init_i);
 }
 
-unsigned char calcPixels8(int x,  __m128d* r0, double i0) {
-    double arr[] = {i0,i0};
-    __m128d init = _mm_load_pd(arr);
-
-
-    return mand8(r0+x*4, init);
+unsigned char calcPixels8(int x,  __m128d* r0) {
+    return mand8(r0+x*4, i0);
 }
 
 void freem128d(__m128d* r0) {

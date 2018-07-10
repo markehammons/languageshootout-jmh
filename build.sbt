@@ -32,6 +32,7 @@ irCompile := {
   import sys.process._
   (for(source <- nativeSources) yield {
     val sourceFile = new File(source)
-    (s"clang -c -O1 -emit-llvm -o target/${sourceFile.getName.stripSuffix(".c")}.bc $source") !
+    val graalVMHome = System.getenv("GRAALVM_HOME")
+    (s"clang -c -O1 -emit-llvm -I$graalVMHome/jre/languages/llvm -o target/${sourceFile.getName.stripSuffix(".c")}.bc $source") !
   }).find(_ != 0).getOrElse(0)
 }
